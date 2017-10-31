@@ -1,0 +1,62 @@
+
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories {
+    jcenter()
+}
+
+mainClassName = 'com.dfjx.cassandra.tools.CQL2CSV'
+
+
+startScripts {
+    applicationName = 'exportTocsv'
+}
+
+task createAllStartScripts() << {
+}
+
+def scripts = [ 'exportTocsv': 'com.dfjx.cassandra.tools.CQL2CSV',
+                'exportTojson':'com.dfjx.cassandra.tools.CQL2JSON',
+                'exportTocql':'com.dfjx.cassandra.tools.CQL2CQL'
+]
+    scripts.each() { scriptName, className ->
+    def t = tasks.create(name: scriptName+'StartScript', type: CreateStartScripts) {
+        mainClassName = className
+        applicationName = scriptName
+        outputDir = new File(project.buildDir, 'scripts')
+        classpath = jar.outputs.files + project.configurations.runtime
+    }
+    applicationDistribution.into("bin") {
+        from(t)
+        fileMode = 0755
+    }
+    createAllStartScripts.dependsOn(t)
+}
+
+dependencies {
+    // Cassandra Driver
+	compile 'com.datastax.cassandra:cassandra-driver-core:3.0.5'
+
+    // Json
+    compile 'com.google.code.gson:gson:2.3.1'
+
+    // CSV
+    compile 'org.apache.commons:commons-csv:1.1'
+
+    // CLI
+    compile 'commons-cli:commons-cli:1.3.1'
+
+    // Log
+    compile 'org.slf4j:slf4j-api:1.7.12',
+            'org.slf4j:slf4j-nop:1.7.12'
+
+    // Configure
+    compile 'commons-configuration:commons-configuration:1.10'
+
+    compile 'org.apache.hadoop:hadoop-common:2.6.0'
+
+
+    ///////////////////////////////////////////////
+    testCompile 'junit:junit:4.12'
+}
